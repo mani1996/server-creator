@@ -1,6 +1,6 @@
 #ifndef GREETSERVERINCLUDES
 #define GREETSERVERINCLUDES
-#include "Server.h"
+#include "../src/Server.h"
 
 class GreetServer : public Server{
 protected:

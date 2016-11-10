@@ -19,7 +19,7 @@ void GreetServer::communicate(int clientFD, sockaddr_storage clientAddr, socklen
 
 		buf[msgLength] = '\0';
 
-		std::string greeting = "Hello, " + std::string(buf).substr(0,strlen(buf)-2);
+		std::string greeting = "Hello, " + std::string(buf);
 
 		if((sendStatus = send(clientFD, greeting.c_str(), greeting.length(), 0)) == -1){
 			printError("send function call");

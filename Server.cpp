@@ -111,8 +111,3 @@ void Server::init(){
 bool Server::isSet() const{
 	return _addrParams!=NULL;
 }
-
-
-void Server::communicate(int clientFD, sockaddr_storage clientAddr, socklen_t acceptSize){
-	throw "This is a virtual method. Extend it in your subclass!";
-}

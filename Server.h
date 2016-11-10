@@ -22,7 +22,7 @@ protected:
 	std::vector<std::thread> threadsDispatched;
 
 	void printError();
-	virtual void communicate(int clientFD, sockaddr_storage clientAddr, socklen_t acceptSize);
+	virtual void communicate(int clientFD, sockaddr_storage clientAddr, socklen_t acceptSize) = 0;
 	void findAndBind(addrinfo* addrNode);
 	void init();	
 

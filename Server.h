@@ -21,7 +21,7 @@ protected:
 	int _backlog;
 	std::vector<std::thread> threadsDispatched;
 
-	void printError();
+	void printError(char* target);
 	virtual void communicate(int clientFD, sockaddr_storage clientAddr, socklen_t acceptSize) = 0;
 	void findAndBind(addrinfo* addrNode);
 	void init();	

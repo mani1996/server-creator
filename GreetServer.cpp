@@ -6,7 +6,7 @@ void GreetServer::communicate(int clientFD, sockaddr_storage clientAddr, socklen
 
 	while(true){
 		if((msgLength = recv(clientFD, buf, 1024, 0))==-1){
-			printError();
+			printError("recv function call");
 			close(clientFD);
 			return ;
 		}
@@ -22,7 +22,7 @@ void GreetServer::communicate(int clientFD, sockaddr_storage clientAddr, socklen
 		std::string greeting = "Hello, " + std::string(buf).substr(0,strlen(buf)-2);
 
 		if((sendStatus = send(clientFD, greeting.c_str(), greeting.length(), 0)) == -1){
-			printError();
+			printError("send function call");
 			close(clientFD);
 			return ;
 		}

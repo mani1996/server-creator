@@ -16,8 +16,9 @@ Server::~Server(){
 }
 
 
-void Server::printError(){
-	perror("Error");
+void Server::printError(char* target){
+	strcat(target," - Error");
+	perror(target);
 }
 
 
@@ -31,18 +32,18 @@ void Server::findAndBind(addrinfo* addrNode){
 	while(addrNode!=NULL){
 		if((_socketFD = socket(addrNode->ai_family, addrNode->ai_socktype, addrNode->ai_protocol))
 				== -1){
-			printError();
+			printError("Socket Creation");
 			addrNode = addrNode->ai_next;
 			continue;
 		}
 
 		if(setsockopt(_socketFD, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1){
-			printError();
+			printError("setsockopt function call");
 			return ;
 		}
 
 		if(bind(_socketFD, addrNode->ai_addr, addrNode->ai_addrlen) == -1){
-			printError();
+			printError("bind function call");
 			close(_socketFD);
 			addrNode = addrNode->ai_next;
 			continue;
@@ -59,12 +60,12 @@ void Server::findAndBind(addrinfo* addrNode){
 
 void Server::listenAndAccept(){
 	if(!isSet()){
-		printError();
+		printError("can't listen due to bind");
 		return ;
 	}
 
 	if(listen(_socketFD, _backlog) == -1){
-		printError();
+		printError("listen function call");
 		return ;
 	}
 
@@ -83,7 +84,7 @@ void Server::listenAndAccept(){
 			threadsDispatched.push_back(std::move(t1));
 		}
 		else{
-			printError();
+			printError("accept function call");
 		}	
 	}	
 }
@@ -99,7 +100,7 @@ void Server::init(){
 	hints.ai_flags = AI_PASSIVE;
 
 	if((status = getaddrinfo(NULL, _port.c_str(), &hints, &servInfo))!=0){
-		printError();
+		printError("getaddrinfo function call");
 		return ;
 	}
 

@@ -10,6 +10,7 @@
 #include <netinet/in.h>
 #include <cstdio>
 #include <cstring>
+#include <set>
 #include <thread>
 #include <vector>
 
@@ -19,16 +20,21 @@ protected:
 	addrinfo* _addrParams;
 	int _socketFD;
 	int _backlog;
-	std::vector<std::thread> threadsDispatched;
+	timeval pollWaitingTime;
+	fd_set _masterSet;
+	fd_set _readSet;
+	fd_set _writeSet;
+	std::set<int> liveSockets;
 
 	void printError(char* target);
-	virtual void communicate(int clientFD, sockaddr_storage clientAddr, socklen_t acceptSize) = 0;
+	void init();
 	void findAndBind(addrinfo* addrNode);
-	void init();	
+	virtual void communicate() = 0;
+	virtual void addClient(int clientFD, sockaddr_storage clientAddr, socklen_t acceptSize) = 0;
+	void delClient(int clientFD);
 
 public:
 	Server(std::string port, int backlog);
-	~Server();
 	void listenAndAccept();
 	bool isSet() const;
 };

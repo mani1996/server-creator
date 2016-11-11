@@ -1,35 +1,70 @@
 #include "GreetServer.h"
 
-void GreetServer::communicate(int clientFD, sockaddr_storage clientAddr, socklen_t acceptSize){
-	int msgLength,sendStatus;
+void GreetServer::addClient(int clientFD, sockaddr_storage clientAddr, socklen_t acceptSize){
+	liveSockets.insert(clientFD);
+	FD_SET(clientFD, &_masterSet);
+}
+
+
+void GreetServer::communicate(){
+	int msgLength,sendStatus,selectStatus,currentSocket;
 	char *buf = new char[1024];
 
+	/*
+		This is an infinite loop which keeps polling for data sent by clients
+		using select(). If data is received from client, greeting is sent back
+	*/
+
 	while(true){
-		if((msgLength = recv(clientFD, buf, 1024, 0))==-1){
-			printError("recv function call");
-			close(clientFD);
-			return ;
-		}
+		if(!liveSockets.empty()){
+			_readSet = _masterSet;
+			selectStatus = select(1024, &_readSet, NULL, NULL, &pollWaitingTime); // nearly non-blocking stmt
 
-		if(msgLength==0){
-			printf("Connection closed by client\n");
-			close(clientFD);
-			return ;
-		}
+			if(selectStatus == -1){
+				printError("select function call");
+			}
+			else if(selectStatus > 0){
+				std::set<int>::iterator sockIter = liveSockets.begin();
 
-		buf[msgLength] = '\0';
+				while(sockIter != liveSockets.end()){
+					currentSocket = *(sockIter);
 
-		std::string greeting = "Hello, " + std::string(buf);
+					if(FD_ISSET(currentSocket, &_readSet)){
+						msgLength = recv(currentSocket, buf, 1024, 0);
 
-		if((sendStatus = send(clientFD, greeting.c_str(), greeting.length(), 0)) == -1){
-			printError("send function call");
-			close(clientFD);
-			return ;
+						if(msgLength == -1){
+							printError("recv function call");
+							delClient(*(sockIter++));
+						}
+						else if(msgLength == 0){
+							printf("Connection closed by client\n");
+							delClient(*(sockIter++));
+						}
+						else{
+							buf[msgLength] = '\0';
+							std::string greeting = "Hello, " + std::string(buf);
+							sendStatus = send(currentSocket, greeting.c_str(), greeting.length(), 0);
+							if(sendStatus == -1){
+								printError("send function call");
+								delClient(*(sockIter++));
+							}
+							else{
+								printf("Sending out greeting..\n");
+								sockIter++;
+							}
+						}
+					}
+					else{
+						sockIter++;
+					}
+
+				}
+			}
+
 		}
 	}
-	
-	printf("Sending out greeting..\n");
-	close(clientFD);
+
+	return ;
 }
 
 int main(){

@@ -7,9 +7,10 @@ to perform low-level binding and listen operations
 It can be subclassed to create concrete server class and server logic 
 inserted in the **communicate** method
 
-The 2 main functions required in the **communicate** method  are 
-**recv** and **send** . Their **man** pages can be accessed in Linux 
-systems.
+The components that are required to be defined for each server are
+* Message exchange mechanism using **recv(), send()**
+* Behaviour for **polling** messages(sets for read,write to be handled manually)
+* Logic to be executed on **establishment of new client connection**
 
 A greeting server, that greets you on sending your name is given as 
 an example to get started.

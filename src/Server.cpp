@@ -9,13 +9,6 @@ Server::Server(std::string port, int backlog = 10){
 }
 
 
-Server::~Server(){
-	for(int i=0; i<threadsDispatched.size(); i++){
-		threadsDispatched[i].join();
-	}
-}
-
-
 void Server::printError(char* target){
 	strcat(target," - Error");
 	perror(target);
@@ -73,20 +66,22 @@ void Server::listenAndAccept(){
 	socklen_t acceptSize;
 	int clientFD;
 
+	std::thread communicatorThread(&Server::communicate, this);
+
 	while(true){
 		acceptSize = sizeof(sockaddr_storage);
 		clientFD = accept(_socketFD, (sockaddr*) &clientAddr, &acceptSize);
 
 		if(clientFD != -1){
 			printf("New client - FD : %d\n", clientFD);
-			//communicate(clientFD, clientAddr, acceptSize);
-			std::thread t1(&Server::communicate, this, clientFD, clientAddr, acceptSize);
-			threadsDispatched.push_back(std::move(t1));
+			addClient(clientFD, clientAddr, acceptSize);
 		}
 		else{
 			printError("accept function call");
 		}	
-	}	
+	}
+
+	communicatorThread.join();
 }
 
 
@@ -94,10 +89,16 @@ void Server::init(){
 	int status;
 	addrinfo hints, *servInfo;
 
+	FD_ZERO(&_readSet);
+	FD_ZERO(&_writeSet);
+	FD_ZERO(&_masterSet);
+
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
+
+	pollWaitingTime.tv_sec = pollWaitingTime.tv_usec = 0; // No blocking on select() call
 
 	if((status = getaddrinfo(NULL, _port.c_str(), &hints, &servInfo))!=0){
 		printError("getaddrinfo function call");
@@ -111,4 +112,11 @@ void Server::init(){
 
 bool Server::isSet() const{
 	return _addrParams!=NULL;
+}
+
+
+void Server::delClient(int clientFD){
+	FD_CLR(clientFD, &_masterSet);
+	close(clientFD);
+	liveSockets.erase(clientFD);
 }
